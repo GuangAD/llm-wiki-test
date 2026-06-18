@@ -1,0 +1,17 @@
+paths:
+  raw: raw
+  notes: notes
+  indexes: indexes
+  prompts: prompts
+  state: state
+  logs: logs
+
+phase: 1
+
+ingest:
+  allowed_inputs: [url, txt, md, pdf, text]
+  lock_enabled: true
+
+ask:
+  max_notes: 5
+  min_score: 1

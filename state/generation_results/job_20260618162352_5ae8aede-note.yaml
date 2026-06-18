@@ -1,0 +1,35 @@
+request_id: gen_20260618162352_5ae8aede_note
+job_id: job_20260618162352_5ae8aede
+content_id: cnt_20260618_5ae8aede
+generation_type: note
+status: completed
+created_at: "2026-06-18T16:26:00+08:00"
+sources:
+  - path: raw/20260618/cnt_20260618_5ae8aede.md
+    source_uri: https://github.com/colbymchenry/codegraph
+payload:
+  title: "CodeGraph：面向 AI 编程智能体的本地代码知识图谱"
+  summary: "CodeGraph 是一个本地代码语义索引工具，通过 CLI 和 MCP 为 Claude Code、Codex、Cursor 等智能体提供符号搜索、调用关系、影响分析和结构化代码上下文，目标是减少文件扫描、token 消耗和工具调用次数。"
+  tags:
+    - ai-coding
+    - code-intelligence
+    - mcp
+    - knowledge-graph
+  stance: approve
+  key_points:
+    - "CodeGraph 把项目代码解析成本地 SQLite 知识图谱，包含符号、调用关系、导入关系、路由映射和全文搜索。"
+    - "它通过 MCP 工具和 CLI 命令向智能体提供 codegraph_explore、node、search、callers、impact 等能力，减少智能体反复 grep/read 的探索成本。"
+    - "官方 benchmark 声称在多个开源项目上可降低 token、工具调用和耗时，其中平均工具调用减少约 58%。"
+    - "安装方式面向多种智能体，包括 Claude Code、Cursor、Codex CLI、opencode、Gemini、Kiro 等，并支持项目级 codegraph init。"
+    - "索引默认 100% 本地运行，支持文件 watcher 自动同步，适合对代码隐私和本地开发效率有要求的场景。"
+  my_judgement: "值得纳入知识库。它和当前本地知识库项目的目标有交集：都强调本地索引、智能体可调用、减少无效上下文读取。后续可以重点研究它的 MCP 工具设计、索引目录约定、自动同步策略和 agent instructions 注入方式。"
+  useful_for:
+    - "设计本地知识库的 slash 命令或 skill 调用方式"
+    - "参考 MCP 工具如何给智能体提供结构化上下文"
+    - "评估代码库语义索引是否能作为后续能力扩展"
+    - "研究本地优先工具如何处理安装、初始化、同步和卸载流程"
+  related_topics:
+    - ai-coding-agent
+    - local-first-knowledge-base
+    - mcp-tools
+    - semantic-code-index

@@ -1,5 +1,7 @@
 # AI Knowledge Base Phase 1 Implementation Plan
 
+> 归档说明：本文是 Phase 1 的历史实施计划。文中的 `kb/`、`raw/`、`notes/`、`indexes/`、`prompts/`、`state/` 等路径按当时“仓库根目录即知识库根目录”的结构描述；当前结构已调整为功能代码位于 `knowledge/kb/`，知识库运行目录位于 `knowledge/` 下。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 实现 AI 知识库 Phase 1：本地 CLI 能完成 `init -> ingest -> generation_request -> generation_result 校验 -> note 落盘 -> Markdown indexes -> ask` 的最小闭环。

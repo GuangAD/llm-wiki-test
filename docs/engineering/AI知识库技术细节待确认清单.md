@@ -4,6 +4,8 @@
 
 本文档用于整理 AI 知识库 MVP 的技术实现细节，作为后续实施计划和开发排期前的确认清单。
 
+路径基准：本文中的 `raw/`、`notes/`、`wiki/`、`briefs/`、`indexes/`、`prompts/`、`state/` 均指 `knowledge/` 工作区下的相对路径；功能代码位于 `knowledge/kb/`。
+
 文档分为三类内容：
 
 - 已确认：前面讨论已收敛的技术决策

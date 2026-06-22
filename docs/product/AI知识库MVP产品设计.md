@@ -89,7 +89,7 @@
 ### 目录结构
 
 ```text
-project-root/
+knowledge/
   raw/
   notes/
   wiki/
@@ -99,6 +99,8 @@ project-root/
   scripts/
   docs/
 ```
+
+以上目录均相对于实际知识库工作区 `knowledge/`。
 
 ### 分层职责
 

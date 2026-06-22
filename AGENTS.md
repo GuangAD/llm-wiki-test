@@ -1,8 +1,8 @@
-# 全局 AGENTS.md 配置文件
+# 项目开发规则
 
 ## 目标
 
-本仓库用于 AI 知识库相关文档与实现探索。所有新增内容都先遵守本文件，再补充子目录规范。
+本仓库用于开发个人 AI 知识库系统。仓库外层是工程项目，`knowledge/` 是实际知识库工作区。
 
 ## 工作原则
 
@@ -12,11 +12,22 @@
 - 复杂任务先写计划，再执行
 - 修改后主动自检
 
-## 目录约定
+## 目录边界
 
-- `docs/`：产品、架构、技术、实施文档
-- `docs/superpowers/plans/`：执行计划类文档
-- 根目录：仅保留少量总览文件和源材料
+- `knowledge/kb/`：知识库功能代码
+- `tests/`：功能代码测试
+- `docs/product/`：产品文档
+- `docs/engineering/`：工程文档
+- `docs/superpowers/`：实施计划和过程文档
+- `knowledge/`：个人知识库本体，包含代码、配置、数据和使用规则
+- 根目录：保留工程配置、总规则、少量源材料和项目总览文件
+
+## 开发规则
+
+- 修改功能代码后运行 `uv run pytest -q` 和 `uv run ruff check .`
+- 普通知识库使用请求进入 `knowledge/` 规则处理
+- 不把 `knowledge/raw/`、`knowledge/notes/`、`knowledge/wiki/`、`knowledge/briefs/`、`knowledge/indexes/`、`knowledge/state/` 当作项目源码修改
+- 外层 `docs/` 不放智能体使用协议；相关协议放在 `knowledge/docs/`
 
 ## 交付要求
 

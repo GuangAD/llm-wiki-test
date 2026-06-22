@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["kb"]
+packages = ["knowledge/kb"]
 
 [tool.ruff]
 line-length = 100
@@ -35,3 +35,4 @@ target-version = "py312"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["knowledge"]

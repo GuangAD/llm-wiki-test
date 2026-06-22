@@ -233,7 +233,9 @@ Phase 1 的 `stance` 只允许：
 - `brief_topics`
 - `brief_weekly`
 
-Phase 1 只要求跑通 `note`，`topic / brief_topics / brief_weekly` 后续阶段实现。
+当前已支持的 `generation_type` 包括 `note / topic / brief_topics / brief_weekly`。
+
+其中 `note` 由 `kb ingest --continue <job_id>` 落盘，`topic` 由 `kb compile --continue <job_id> --topic-key <topic_key>` 落盘，`brief_topics / brief_weekly` 分别由 `kb brief topics --continue <job_id>`、`kb brief weekly --continue <job_id>` 落盘。
 
 GenerationRequest 示例：
 
@@ -683,7 +685,11 @@ Phase 1 只要求跑通：
 
 `ingest -> raw -> generation_request -> note -> indexes -> ask`
 
-完整 topic 编译放到 Phase 2，`brief topics / brief weekly` 放到 Phase 3。这样第一阶段先验证知识能入库、能定位、能回答，再扩展编译和反向产出能力。
+Phase 2/3 已采用同一套两段式生成协议扩展：
+
+- `ingest --continue` 写入 note 后构建轻量关联，并在满足条件时生成 `topic` 请求。
+- `compile --continue` 校验 `topic` 结果并写入 `wiki/topic-<topic_key>.md`，同时更新 `indexes/topics.md`。
+- `brief topics` 与 `brief weekly` 先生成请求，智能体写入结构化结果后再由 `--continue` 写入 `briefs/`。
 
 ## 14. 去重与幂等
 
@@ -939,6 +945,7 @@ logs/
 | --- | --- |
 | `/kb-ingest <url>` | `kb ingest <url>` |
 | `/kb-ask <question>` | `kb ask "<question>"` |
+| `/kb-compile-topic <job_id> <topic_key>` | `kb compile --continue <job_id> --topic-key <topic_key>` |
 | `/kb-brief-topics` | `kb brief topics` |
 | `/kb-brief-weekly` | `kb brief weekly` |
 
@@ -948,6 +955,7 @@ logs/
 
 - `kb ingest`
 - `kb ask`
+- `kb compile --continue`
 - `kb brief topics`
 - `kb brief weekly`
 - `kb retry`

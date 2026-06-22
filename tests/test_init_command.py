@@ -15,6 +15,8 @@ def test_init_creates_directories(workspace, monkeypatch):
     for path in [
         "raw",
         "notes",
+        "wiki",
+        "briefs",
         "indexes",
         "prompts",
         "state/jobs",
@@ -25,6 +27,9 @@ def test_init_creates_directories(workspace, monkeypatch):
     ]:
         assert (workspace / path).exists()
     assert (workspace / "prompts" / "note.md").exists()
+    assert (workspace / "prompts" / "topic.md").exists()
+    assert (workspace / "prompts" / "brief-topics.md").exists()
+    assert (workspace / "prompts" / "brief-weekly.md").exists()
 
 
 def test_init_does_not_overwrite_existing_prompt(workspace, monkeypatch):
@@ -37,3 +42,15 @@ def test_init_does_not_overwrite_existing_prompt(workspace, monkeypatch):
 
     assert result.exit_code == 0
     assert prompt_path.read_text(encoding="utf-8") == "custom prompt"
+
+
+def test_init_does_not_overwrite_existing_brief_prompt(workspace, monkeypatch):
+    monkeypatch.chdir(workspace)
+    prompt_path = workspace / "prompts" / "brief-weekly.md"
+    prompt_path.parent.mkdir(parents=True)
+    prompt_path.write_text("custom weekly prompt", encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["init"])
+
+    assert result.exit_code == 0
+    assert prompt_path.read_text(encoding="utf-8") == "custom weekly prompt"

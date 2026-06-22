@@ -1,5 +1,6 @@
 import json
 
+import frontmatter
 import yaml
 from typer.testing import CliRunner
 
@@ -76,3 +77,81 @@ def test_ingest_continue_compatibility_alias(workspace, monkeypatch):
     assert second.exit_code == 0
     assert second_data["error_code"] == "GENERATION_RESULT_NOT_FOUND"
     assert second_data["next_action"] == "write_generation_result"
+
+
+def test_ingest_continue_builds_relations_and_topic_request(workspace, monkeypatch):
+    monkeypatch.chdir(workspace)
+    runner = CliRunner()
+    runner.invoke(app, ["init"])
+
+    first = runner.invoke(app, ["ingest", "AI knowledge base architecture"])
+    first_data = json.loads(first.stdout)
+    first_result_path = workspace / first_data["generation_result_path"]
+    first_result_path.write_text(
+        yaml.safe_dump(
+            {
+                "request_id": "gen_first_note",
+                "job_id": first_data["job_id"],
+                "content_id": first_data["content_id"],
+                "generation_type": "note",
+                "status": "completed",
+                "created_at": "2026-06-18T14:32:00+08:00",
+                "sources": [{"path": "raw/20260618/first.md", "source_uri": "text:first"}],
+                "payload": {
+                    "title": "AI knowledge base architecture",
+                    "summary": "AI knowledge base architecture.",
+                    "tags": ["ai", "knowledge", "workflow"],
+                    "stance": "approve",
+                    "key_points": ["point a", "point b", "point c"],
+                    "my_judgement": "Useful.",
+                    "useful_for": ["writing"],
+                    "related_topics": ["AI Knowledge Base"],
+                },
+            },
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+    first_continue = runner.invoke(app, ["ingest", "--continue", first_data["job_id"]])
+    assert first_continue.exit_code == 0
+
+    second = runner.invoke(app, ["ingest", "AI knowledge base workflow"])
+    second_data = json.loads(second.stdout)
+    second_result_path = workspace / second_data["generation_result_path"]
+    second_result_path.write_text(
+        yaml.safe_dump(
+            {
+                "request_id": "gen_second_note",
+                "job_id": second_data["job_id"],
+                "content_id": second_data["content_id"],
+                "generation_type": "note",
+                "status": "completed",
+                "created_at": "2026-06-18T14:33:00+08:00",
+                "sources": [{"path": "raw/20260618/second.md", "source_uri": "text:second"}],
+                "payload": {
+                    "title": "AI knowledge base workflow",
+                    "summary": "AI knowledge base workflow.",
+                    "tags": ["ai", "knowledge", "writing"],
+                    "stance": "approve",
+                    "key_points": ["point a", "point b", "point c"],
+                    "my_judgement": "Useful.",
+                    "useful_for": ["writing"],
+                    "related_topics": ["AI Knowledge Base"],
+                },
+            },
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+
+    second_continue = runner.invoke(app, ["ingest", "--continue", second_data["job_id"]])
+    data = json.loads(second_continue.stdout)
+    first_note = frontmatter.loads(next((workspace / "notes").glob("**/*.md")).read_text("utf-8"))
+
+    assert second_continue.exit_code == 0
+    assert data["related_note_ids"]
+    assert data["topic_request_paths"] == [
+        f"state/generation_requests/{second_data['job_id']}-topic.md"
+    ]
+    assert (workspace / data["topic_request_paths"][0]).exists()
+    assert first_note.metadata["related_note_ids"]

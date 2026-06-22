@@ -17,3 +17,8 @@ def iter_notes(root: Path) -> list[tuple[Path, frontmatter.Post]]:
     for path in sorted((root / "notes").glob("**/*.md")):
         notes.append((path, frontmatter.loads(path.read_text(encoding="utf-8"))))
     return notes
+
+
+def write_note_post(path: Path, post: frontmatter.Post) -> Path:
+    atomic_write_text(path, frontmatter.dumps(post))
+    return path

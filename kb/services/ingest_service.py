@@ -19,6 +19,7 @@ from kb.storage.index_store import write_phase1_indexes
 from kb.storage.job_store import read_job, write_job
 from kb.storage.note_store import iter_notes, write_note
 from kb.storage.raw_store import find_existing_content_by_hash, write_raw
+from kb.services.relation_service import sync_relations
 
 
 def _now() -> datetime:
@@ -93,7 +94,7 @@ def _ingest_first_pass_locked(root: Path, value: str) -> dict:
             "job_id": job_id,
             "content_id": content_id,
             "generation_type": "note",
-            "source_paths": [str(raw_path.relative_to(root))],
+            "source_paths": [raw_path.relative_to(root).as_posix()],
             "prompt_path": "prompts/note.md",
             "output_schema": "note_v1",
             "result_path": str(result.relative_to(root)),
@@ -124,8 +125,8 @@ def _ingest_first_pass_locked(root: Path, value: str) -> dict:
         "job_id": job_id,
         "content_id": content_id,
         "next_action": "write_generation_result",
-        "generation_request_path": str(request.relative_to(root)),
-        "generation_result_path": str(result.relative_to(root)),
+            "generation_request_path": request.relative_to(root).as_posix(),
+            "generation_result_path": result.relative_to(root).as_posix(),
         "message": "Generation request created. Read request file and write result file.",
     }
 
@@ -194,6 +195,8 @@ def ingest_continue(root: Path, job_id: str) -> dict:
         ]
     )
     note_path = write_note(root, date, note_id, metadata, body)
+    relation_result = sync_relations(root, note_id, result.payload.related_topics)
+    topic_request_paths = _write_topic_requests(root, job_id, relation_result["compilable_topic_keys"])
     index_paths = rebuild_phase1_indexes(root)
     completed_stages = [
         *job.get("completed_stages", []),
@@ -218,11 +221,47 @@ def ingest_continue(root: Path, job_id: str) -> dict:
         "command": "kb ingest --continue",
         "status": "completed",
         "job_id": job_id,
-        "note_path": str(note_path.relative_to(root)),
-        "index_paths": [str(path.relative_to(root)) for path in index_paths],
-        "next_action": "none",
+        "note_path": note_path.relative_to(root).as_posix(),
+        "index_paths": [path.relative_to(root).as_posix() for path in index_paths],
+        "related_note_ids": relation_result["related_note_ids"],
+        "topic_request_paths": [path.relative_to(root).as_posix() for path in topic_request_paths],
+        "next_action": "write_generation_result" if topic_request_paths else "none",
         "message": "Note persisted and indexes updated.",
     }
+
+
+def _write_topic_requests(root: Path, job_id: str, topic_keys: list[str]) -> list[Path]:
+    paths: list[Path] = []
+    stamp = job_id.split("_", maxsplit=2)[1]
+    notes = iter_notes(root)
+    for topic_key in topic_keys:
+        source_paths = [
+            str(path.relative_to(root))
+            for path, post in notes
+            if topic_key in [str(key) for key in post.metadata.get("topic_keys", [])]
+        ]
+        result = result_path(root, job_id, "topic")
+        request = write_generation_request(
+            root,
+            job_id,
+            "topic",
+            {
+                "request_id": f"gen_{stamp}_{topic_key}_topic",
+                "job_id": job_id,
+                "generation_type": "topic",
+                "topic_key": topic_key,
+                "source_paths": source_paths,
+                "prompt_path": "prompts/topic.md",
+                "output_schema": "topic_v1",
+                "result_path": result.relative_to(root).as_posix(),
+            },
+            "## 任务\n\n"
+            f"请读取 `source_paths` 中的 note，生成主题 `{topic_key}` 的结构化 topic 结果。\n\n"
+            "## 输出要求\n\n"
+            "只写入 `result_path`，不要直接修改 `wiki/`、`indexes/`。\n",
+        )
+        paths.append(request)
+    return paths
 
 
 def rebuild_phase1_indexes(root: Path) -> list[Path]:

@@ -20,6 +20,7 @@ uv run ruff check .
 
 ```powershell
 uv run kb ingest "<input>"
+uv run kb status
 uv run kb ask "<question>"
 uv run kb brief topics
 uv run kb brief weekly

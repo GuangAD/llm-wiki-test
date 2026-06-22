@@ -36,6 +36,7 @@ flowchart LR
     A[kb CLI] --> B[Ingest Pipeline]
     A --> C[Ask Service]
     A --> D[Brief Service]
+    A --> O[Status Service]
     B --> E[Source Adapters]
     E --> F[Raw Store]
     F --> G[Note Builder]
@@ -49,6 +50,10 @@ flowchart LR
     D --> L
     D --> M
     D --> N
+    O --> L
+    O --> F
+    O --> M
+    O --> N
 ```
 
 ### 3.2 分层说明
@@ -137,7 +142,11 @@ GitHub 专用 adapter 放到 Phase 1.5 或 Phase 2。微信公众号首版降级
 
 只读消费 `indexes/`、`wiki/`、`notes/`，不允许写操作。
 
-### 5.8 Brief Service
+### 5.8 Status Service
+
+只读消费 `indexes/` 和内容目录，返回知识库数量、最近笔记、标签和来源，用于回答盘点类问题。
+
+### 5.9 Brief Service
 
 生成：
 
@@ -864,7 +873,7 @@ logs/
 - 完整原文
 - 密钥、token、密码
 
-后续预留：
+当前已实现的观察入口：
 
 - `kb status`
 

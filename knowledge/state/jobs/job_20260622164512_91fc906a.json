@@ -1,0 +1,18 @@
+{
+  "job_id": "job_20260622164512_91fc906a",
+  "content_id": "cnt_20260622_91fc906a",
+  "status": "completed",
+  "current_stage": "completed",
+  "completed_stages": [
+    "received",
+    "raw_saved",
+    "generation_requested",
+    "generation_completed",
+    "note_generated",
+    "indexes_updated",
+    "completed"
+  ],
+  "retry_count": 0,
+  "created_at": "2026-06-22T16:45:12.182318+08:00",
+  "updated_at": "2026-06-22T16:46:27.281131+08:00"
+}

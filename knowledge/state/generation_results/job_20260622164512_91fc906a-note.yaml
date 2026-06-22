@@ -1,0 +1,35 @@
+request_id: gen_20260622164512_91fc906a_note
+job_id: job_20260622164512_91fc906a
+content_id: cnt_20260622_91fc906a
+generation_type: note
+status: completed
+created_at: '2026-06-22T16:50:00+08:00'
+sources:
+  - path: raw/20260622/cnt_20260622_91fc906a.md
+    source_uri: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+payload:
+  title: LLM 维护的个人知识库模式
+  summary: Karpathy 的 gist 提出一种区别于传统 RAG 的个人知识库模式：LLM 不只在查询时检索原始资料，而是持续维护一个结构化、互相链接、可积累的 Markdown wiki，让知识在每次入库和提问后不断被编译、更新和沉淀。
+  tags:
+    - ai
+    - knowledge
+    - workflow
+    - writing
+  stance: approve
+  key_points:
+    - 传统 RAG 每次查询都重新从原始资料中检索和拼接答案，缺少长期积累和持续综合。
+    - 该模式主张让 LLM 持续维护一个持久 wiki，在新增来源时更新摘要、实体页、概念页、索引和相互引用。
+    - 原始资料、LLM 生成的 wiki、以及约束 LLM 行为的 schema 是三层核心结构。
+    - 入库、查询和 lint 是主要工作流：入库编译知识，查询沉淀新分析，lint 检查矛盾、孤儿页和缺失链接。
+    - index.md 和 log.md 分别承担内容导航和时间线记录，帮助 LLM 在中等规模知识库中保持可操作性。
+    - 作者强调知识库维护的繁琐工作适合交给 LLM，人类保留选源、提问、判断和方向控制。
+  my_judgement: 这篇文章和当前 fuxi-kb 的方向高度一致，尤其是“知识先编译成可持续演化的 wiki，而不是每次临时 RAG”的判断，可以作为本项目继续设计 topic、brief、lint、schema 和智能体协议的核心参考。
+  useful_for:
+    - 设计个人 AI 知识库的长期架构
+    - 解释为什么首版不应该只做向量库或传统 RAG
+    - 完善 knowledge/AGENTS.md 和智能体使用协议
+    - 设计未来的 wiki lint、索引、日志和 provenance 机制
+  related_topics:
+    - ai-knowledge-base
+    - llm-maintained-wiki
+    - personal-knowledge-management

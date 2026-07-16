@@ -1,17 +1,91 @@
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
 
 from kb.core.errors import error_response
+from kb.core.ids import build_job_id, build_request_id
 from kb.core.models import TopicPayload
-from kb.storage.generation_store import read_generation_result
+from kb.storage.generation_store import read_generation_result, result_path, write_generation_request
 from kb.storage.index_store import write_topics_index
+from kb.storage.job_store import write_job
+from kb.storage.log_store import append_history
+from kb.storage.note_store import iter_notes
 from kb.storage.topic_store import iter_topics, write_topic
+
+
+def request_compile(root: Path, topic_key: str) -> dict:
+    now = datetime.now().astimezone()
+    stamp = now.strftime("%Y%m%d%H%M%S")
+    source_key = f"topic:{topic_key}:{now.isoformat()}"
+    job_id = build_job_id(stamp, source_key)
+    request_id = build_request_id(stamp, source_key, "topic")
+    source_paths = [
+        path.relative_to(root).as_posix()
+        for path, post in iter_notes(root)
+        if topic_key in [str(key) for key in post.metadata.get("topic_keys", [])]
+    ]
+    existing_topic = root / "wiki" / f"topic-{topic_key}.md"
+    if existing_topic.exists():
+        source_paths.append(existing_topic.relative_to(root).as_posix())
+    if len([path for path in source_paths if path.startswith("notes/")]) < 2:
+        return error_response(
+            command="kb compile",
+            status="permanent_failed",
+            error_code="TOPIC_NOT_READY",
+            error_message="At least two notes are required to compile a topic.",
+            retryable=False,
+            next_action="none",
+        )
+
+    result = result_path(root, job_id, "topic", topic_key)
+    request = write_generation_request(
+        root,
+        job_id,
+        "topic",
+        {
+            "request_id": request_id,
+            "job_id": job_id,
+            "generation_type": "topic",
+            "topic_key": topic_key,
+            "source_paths": source_paths,
+            "prompt_path": "prompts/topic.md",
+            "output_schema": "topic_v1",
+            "result_path": result.relative_to(root).as_posix(),
+        },
+        "## 任务\n\n"
+        f"请读取 `source_paths`，重新编译主题 `{topic_key}`。已有主题页只能作为旧版本参考。\n\n"
+        "## 输出要求\n\n只写入 `result_path`，不要直接修改 `wiki/`、`indexes/`。\n",
+        scope_key=topic_key,
+    )
+    write_job(
+        root,
+        job_id,
+        {
+            "job_id": job_id,
+            "generation_type": "topic",
+            "topic_key": topic_key,
+            "status": "needs_generation",
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+        },
+    )
+    return {
+        "ok": True,
+        "command": "kb compile",
+        "status": "needs_generation",
+        "job_id": job_id,
+        "topic_key": topic_key,
+        "generation_request_path": request.relative_to(root).as_posix(),
+        "generation_result_path": result.relative_to(root).as_posix(),
+        "next_action": "write_generation_result",
+        "message": "Topic generation request created.",
+    }
 
 
 def compile_continue(root: Path, job_id: str, topic_key: str) -> dict:
     try:
-        result = read_generation_result(root, job_id, "topic")
+        result = read_generation_result(root, job_id, "topic", topic_key)
     except FileNotFoundError:
         return error_response(
             command="kb compile --continue",
@@ -22,7 +96,7 @@ def compile_continue(root: Path, job_id: str, topic_key: str) -> dict:
             next_action="write_generation_result",
             job_id=job_id,
         )
-    except ValidationError as exc:
+    except (ValidationError, ValueError) as exc:
         return error_response(
             command="kb compile --continue",
             status="failed",
@@ -57,6 +131,12 @@ def compile_continue(root: Path, job_id: str, topic_key: str) -> dict:
 
     topic_path = write_topic(root, payload, result.created_at)
     index_path = rebuild_topics_index(root)
+    append_history(
+        root,
+        "compile",
+        payload.title,
+        [f"topic_key: {topic_key}", f"path: {topic_path.relative_to(root).as_posix()}"],
+    )
     return {
         "ok": True,
         "command": "kb compile --continue",

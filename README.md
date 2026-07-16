@@ -22,6 +22,9 @@ uv run ruff check .
 uv run kb ingest "<input>"
 uv run kb status
 uv run kb ask "<question>"
+uv run kb ask --continue <job_id>
+uv run kb compile --topic-key <topic_key>
+uv run kb lint
 uv run kb brief topics
 uv run kb brief weekly
 ```

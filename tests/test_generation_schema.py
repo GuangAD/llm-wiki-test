@@ -2,9 +2,11 @@ import pytest
 from pydantic import ValidationError
 
 from kb.core.models import (
+    AnswerPayload,
     BriefTopicsPayload,
     BriefWeeklyPayload,
     GenerationResult,
+    LintPayload,
     NotePayload,
     Stance,
     TopicPayload,
@@ -137,6 +139,52 @@ def test_generation_result_accepts_brief_weekly_payload():
 
     assert isinstance(result.payload, BriefWeeklyPayload)
     assert result.payload.week == "2026-W26"
+
+
+def test_generation_result_accepts_answer_payload():
+    result = GenerationResult(
+        request_id="gen_answer",
+        job_id="job_answer",
+        generation_type="answer",
+        status="completed",
+        created_at="2026-06-22T10:00:00+08:00",
+        sources=[{"path": "wiki/topic-ai.md"}],
+        payload={
+            "title": "LLM Wiki 与 RAG",
+            "question": "两者有什么区别？",
+            "answer_markdown": "LLM Wiki 会持久化综合结果。",
+            "citations": [{"path": "wiki/topic-ai.md"}],
+            "topic_keys": ["ai"],
+        },
+    )
+
+    assert isinstance(result.payload, AnswerPayload)
+
+
+def test_generation_result_accepts_lint_payload():
+    result = GenerationResult(
+        request_id="gen_lint",
+        job_id="job_lint",
+        generation_type="lint",
+        status="completed",
+        created_at="2026-06-22T10:00:00+08:00",
+        sources=[{"path": "wiki/topic-ai.md"}],
+        payload={
+            "summary": "发现一个未决问题。",
+            "issues": [
+                {
+                    "code": "stale_claim",
+                    "severity": "warning",
+                    "target_paths": ["wiki/topic-ai.md"],
+                    "description": "结论可能已经过期。",
+                    "suggested_action": "重新编译主题。",
+                    "topic_key": "ai",
+                }
+            ],
+        },
+    )
+
+    assert isinstance(result.payload, LintPayload)
 
 
 def test_generation_result_rejects_payload_that_does_not_match_type():

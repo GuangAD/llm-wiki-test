@@ -27,18 +27,23 @@ def test_ingest_continue_writes_note_and_indexes(workspace, monkeypatch):
     runner.invoke(app, ["init"])
     first = runner.invoke(app, ["ingest", "AI 会改变个人知识管理"])
     data = json.loads(first.stdout)
+    request = frontmatter.loads(
+        (workspace / data["generation_request_path"]).read_text(encoding="utf-8")
+    )
     result_path = workspace / data["generation_result_path"]
     result_path.parent.mkdir(parents=True, exist_ok=True)
     result_path.write_text(
         yaml.safe_dump(
             {
-                "request_id": "gen_20260618143022_a8f31c92_note",
+                "request_id": request.metadata["request_id"],
                 "job_id": data["job_id"],
                 "content_id": data["content_id"],
                 "generation_type": "note",
                 "status": "completed",
                 "created_at": "2026-06-18T14:32:00+08:00",
-                "sources": [{"path": "raw/20260618/example.md", "source_uri": "text:test"}],
+                "sources": [
+                    {"path": request.metadata["source_paths"][0], "source_uri": "text:test"}
+                ],
                 "payload": {
                     "title": "AI 知识管理",
                     "summary": "AI 能提升个人知识管理效率。",
@@ -86,17 +91,25 @@ def test_ingest_continue_builds_relations_and_topic_request(workspace, monkeypat
 
     first = runner.invoke(app, ["ingest", "AI knowledge base architecture"])
     first_data = json.loads(first.stdout)
+    first_request = frontmatter.loads(
+        (workspace / first_data["generation_request_path"]).read_text(encoding="utf-8")
+    )
     first_result_path = workspace / first_data["generation_result_path"]
     first_result_path.write_text(
         yaml.safe_dump(
             {
-                "request_id": "gen_first_note",
+                "request_id": first_request.metadata["request_id"],
                 "job_id": first_data["job_id"],
                 "content_id": first_data["content_id"],
                 "generation_type": "note",
                 "status": "completed",
                 "created_at": "2026-06-18T14:32:00+08:00",
-                "sources": [{"path": "raw/20260618/first.md", "source_uri": "text:first"}],
+                "sources": [
+                    {
+                        "path": first_request.metadata["source_paths"][0],
+                        "source_uri": "text:first",
+                    }
+                ],
                 "payload": {
                     "title": "AI knowledge base architecture",
                     "summary": "AI knowledge base architecture.",
@@ -117,17 +130,25 @@ def test_ingest_continue_builds_relations_and_topic_request(workspace, monkeypat
 
     second = runner.invoke(app, ["ingest", "AI knowledge base workflow"])
     second_data = json.loads(second.stdout)
+    second_request = frontmatter.loads(
+        (workspace / second_data["generation_request_path"]).read_text(encoding="utf-8")
+    )
     second_result_path = workspace / second_data["generation_result_path"]
     second_result_path.write_text(
         yaml.safe_dump(
             {
-                "request_id": "gen_second_note",
+                "request_id": second_request.metadata["request_id"],
                 "job_id": second_data["job_id"],
                 "content_id": second_data["content_id"],
                 "generation_type": "note",
                 "status": "completed",
                 "created_at": "2026-06-18T14:33:00+08:00",
-                "sources": [{"path": "raw/20260618/second.md", "source_uri": "text:second"}],
+                "sources": [
+                    {
+                        "path": second_request.metadata["source_paths"][0],
+                        "source_uri": "text:second",
+                    }
+                ],
                 "payload": {
                     "title": "AI knowledge base workflow",
                     "summary": "AI knowledge base workflow.",
@@ -151,7 +172,7 @@ def test_ingest_continue_builds_relations_and_topic_request(workspace, monkeypat
     assert second_continue.exit_code == 0
     assert data["related_note_ids"]
     assert data["topic_request_paths"] == [
-        f"state/generation_requests/{second_data['job_id']}-topic.md"
+        f"state/generation_requests/{second_data['job_id']}-topic-ai-knowledge-base.md"
     ]
     assert (workspace / data["topic_request_paths"][0]).exists()
     assert first_note.metadata["related_note_ids"]

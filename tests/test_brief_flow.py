@@ -1,9 +1,12 @@
 import json
+from datetime import datetime
 
+import frontmatter
 import yaml
 from typer.testing import CliRunner
 
 from kb.cli.main import app
+from kb.services import brief_service
 
 
 def test_brief_topics_flow(workspace, monkeypatch):
@@ -30,7 +33,7 @@ def test_brief_topics_flow(workspace, monkeypatch):
                 "generation_type": "brief_topics",
                 "status": "completed",
                 "created_at": "2026-06-22T10:00:00+08:00",
-                "sources": [{"path": "indexes/recent.md"}],
+                "sources": [],
                 "payload": {
                     "date": first_data["date"],
                     "topics": [
@@ -80,7 +83,7 @@ def test_brief_weekly_flow(workspace, monkeypatch):
                 "generation_type": "brief_weekly",
                 "status": "completed",
                 "created_at": "2026-06-22T10:00:00+08:00",
-                "sources": [{"path": "indexes/recent.md"}],
+                "sources": [],
                 "payload": {
                     "week": first_data["week"],
                     "new_items": ["AI 知识库架构"],
@@ -120,7 +123,7 @@ def test_brief_weekly_continue_rejects_wrong_week(workspace, monkeypatch):
                 "generation_type": "brief_weekly",
                 "status": "completed",
                 "created_at": "2026-06-22T10:00:00+08:00",
-                "sources": [{"path": "indexes/recent.md"}],
+                "sources": [],
                 "payload": {
                     "week": "2099-W01",
                     "new_items": [],
@@ -140,3 +143,34 @@ def test_brief_weekly_continue_rejects_wrong_week(workspace, monkeypatch):
     assert second.exit_code == 0
     assert second_data["ok"] is False
     assert second_data["error_code"] == "BRIEF_WEEK_MISMATCH"
+
+
+def test_brief_weekly_only_includes_current_week_sources(workspace, monkeypatch):
+    monkeypatch.chdir(workspace)
+    monkeypatch.setattr(
+        brief_service,
+        "_now",
+        lambda: datetime.fromisoformat("2026-07-16T10:00:00+08:00"),
+    )
+    runner = CliRunner()
+    runner.invoke(app, ["init"])
+    note_dir = workspace / "notes" / "20260716"
+    note_dir.mkdir(parents=True)
+    (note_dir / "current.md").write_text(
+        frontmatter.dumps(
+            frontmatter.Post("current", created_at="2026-07-15T10:00:00+08:00")
+        ),
+        encoding="utf-8",
+    )
+    (note_dir / "old.md").write_text(
+        frontmatter.dumps(frontmatter.Post("old", created_at="2026-06-01T10:00:00+08:00")),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["brief", "weekly"])
+    data = json.loads(result.stdout)
+    request = frontmatter.loads(
+        (workspace / data["generation_request_path"]).read_text(encoding="utf-8")
+    )
+
+    assert request.metadata["source_paths"] == ["notes/20260716/current.md"]

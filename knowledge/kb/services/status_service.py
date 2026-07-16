@@ -27,7 +27,7 @@ def _parse_recent(path: Path) -> list[dict]:
             recent.append(
                 {
                     "title": match.group("title"),
-                    "path": match.group("path"),
+                    "path": match.group("path").removeprefix("../"),
                 }
             )
     return recent
@@ -77,7 +77,10 @@ def status(root: Path) -> dict:
             "raw": _count_files(root / "raw"),
             "notes": _count_files(root / "notes"),
             "wiki": _count_files(root / "wiki"),
+            "topics": _count_files(root / "wiki", "topic-*.md"),
+            "insights": _count_files(root / "wiki", "insight-*.md"),
             "briefs": _count_files(root / "briefs"),
+            "reports": _count_files(root / "reports"),
         },
         "recent_notes": _parse_recent(index_paths[0]),
         "tags": _parse_tags(index_paths[1]),

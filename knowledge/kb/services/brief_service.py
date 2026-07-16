@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+import frontmatter
 from pydantic import ValidationError
 
 from kb.core.errors import error_response
@@ -9,20 +10,42 @@ from kb.core.models import BriefTopicsPayload, BriefWeeklyPayload
 from kb.storage.brief_store import write_topic_picks, write_weekly
 from kb.storage.generation_store import read_generation_result, result_path, write_generation_request
 from kb.storage.job_store import read_job, write_job
+from kb.storage.log_store import append_history
 
 
 def _now() -> datetime:
     return datetime.now().astimezone()
 
 
-def _source_paths(root: Path) -> list[str]:
-    candidates = [
-        root / "indexes" / "recent.md",
-        root / "indexes" / "tags.md",
-        root / "indexes" / "topics.md",
-    ]
-    candidates.extend(sorted((root / "wiki").glob("topic-*.md")))
-    candidates.extend(sorted((root / "notes").glob("**/*.md")))
+def _belongs_to_week(path: Path, target_week: str) -> bool:
+    post = frontmatter.loads(path.read_text(encoding="utf-8"))
+    value = post.metadata.get("created_at") or post.metadata.get("updated_at")
+    if not value:
+        return False
+    try:
+        created = datetime.fromisoformat(str(value))
+    except ValueError:
+        return False
+    year, week, _ = created.isocalendar()
+    return f"{year}-W{week:02d}" == target_week
+
+
+def _source_paths(root: Path, target_week: str | None = None) -> list[str]:
+    if target_week:
+        candidates = [
+            *sorted((root / "wiki").glob("*.md")),
+            *sorted((root / "notes").glob("**/*.md")),
+        ]
+        candidates = [path for path in candidates if _belongs_to_week(path, target_week)]
+    else:
+        candidates = [
+            root / "indexes" / "topics.md",
+            root / "indexes" / "insights.md",
+            root / "indexes" / "recent.md",
+            root / "indexes" / "tags.md",
+        ]
+        candidates.extend(sorted((root / "wiki").glob("*.md")))
+        candidates.extend(sorted((root / "notes").glob("**/*.md")))
     return [path.relative_to(root).as_posix() for path in candidates if path.exists()]
 
 
@@ -30,7 +53,7 @@ def request_brief_topics(root: Path) -> dict:
     now = _now()
     date = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y%m%d%H%M%S")
-    source_key = f"brief_topics:{date}"
+    source_key = f"brief_topics:{date}:{now.isoformat()}"
     job_id = build_job_id(stamp, source_key)
     request_id = build_request_id(stamp, source_key, "brief_topics")
     result = result_path(root, job_id, "brief_topics")
@@ -71,7 +94,7 @@ def request_brief_weekly(root: Path) -> dict:
     year, week, _ = now.isocalendar()
     target_week = f"{year}-W{week:02d}"
     stamp = now.strftime("%Y%m%d%H%M%S")
-    source_key = f"brief_weekly:{target_week}"
+    source_key = f"brief_weekly:{target_week}:{now.isoformat()}"
     job_id = build_job_id(stamp, source_key)
     request_id = build_request_id(stamp, source_key, "brief_weekly")
     result = result_path(root, job_id, "brief_weekly")
@@ -84,7 +107,7 @@ def request_brief_weekly(root: Path) -> dict:
             "job_id": job_id,
             "generation_type": "brief_weekly",
             "week": target_week,
-            "source_paths": _source_paths(root),
+            "source_paths": _source_paths(root, target_week),
             "prompt_path": "prompts/brief-weekly.md",
             "output_schema": "brief_weekly_v1",
             "result_path": result.relative_to(root).as_posix(),
@@ -219,7 +242,7 @@ def _read_brief_result(root: Path, job_id: str, generation_type: str):
             next_action="write_generation_result",
             job_id=job_id,
         )
-    except ValidationError as exc:
+    except (ValidationError, ValueError) as exc:
         return error_response(
             command=f"kb brief {generation_type.removeprefix('brief_')} --continue",
             status="failed",
@@ -244,6 +267,12 @@ def _invalid_payload(job_id: str, generation_type: str) -> dict:
 
 
 def _completed_response(command: str, job_id: str, brief_path: Path, root: Path) -> dict:
+    append_history(
+        root,
+        "brief",
+        brief_path.stem,
+        [f"job_id: {job_id}", f"path: {brief_path.relative_to(root).as_posix()}"],
+    )
     return {
         "ok": True,
         "command": command,

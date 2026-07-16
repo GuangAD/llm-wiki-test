@@ -11,7 +11,31 @@ def test_compile_continue_writes_topic_page_and_index(workspace, monkeypatch):
     monkeypatch.chdir(workspace)
     runner = CliRunner()
     runner.invoke(app, ["init"])
-    result_path = workspace / "state" / "generation_results" / "job_topic-topic.yaml"
+    request_path = (
+        workspace
+        / "state"
+        / "generation_requests"
+        / "job_topic-topic-ai-knowledge-base.md"
+    )
+    request_path.write_text(
+        frontmatter.dumps(
+            frontmatter.Post(
+                "request",
+                request_id="gen_topic",
+                job_id="job_topic",
+                generation_type="topic",
+                topic_key="ai-knowledge-base",
+                source_paths=[
+                    "notes/20260618/note_20260618_a.md",
+                    "notes/20260618/note_20260618_b.md",
+                ],
+            )
+        ),
+        encoding="utf-8",
+    )
+    result_path = (
+        workspace / "state" / "generation_results" / "job_topic-topic-ai-knowledge-base.yaml"
+    )
     result_path.write_text(
         yaml.safe_dump(
             {
@@ -61,7 +85,21 @@ def test_compile_continue_rejects_mismatched_topic_key(workspace, monkeypatch):
     monkeypatch.chdir(workspace)
     runner = CliRunner()
     runner.invoke(app, ["init"])
-    result_path = workspace / "state" / "generation_results" / "job_topic-topic.yaml"
+    request_path = workspace / "state" / "generation_requests" / "job_topic-topic-other-topic.md"
+    request_path.write_text(
+        frontmatter.dumps(
+            frontmatter.Post(
+                "request",
+                request_id="gen_topic",
+                job_id="job_topic",
+                generation_type="topic",
+                topic_key="other-topic",
+                source_paths=["notes/20260618/note_20260618_a.md"],
+            )
+        ),
+        encoding="utf-8",
+    )
+    result_path = workspace / "state" / "generation_results" / "job_topic-topic-other-topic.yaml"
     result_path.write_text(
         yaml.safe_dump(
             {

@@ -1,0 +1,20 @@
+request_id: gen_20260716172919_df7c6ca7_lint
+job_id: job_20260716172919_df7c6ca7
+generation_type: lint
+status: completed
+created_at: '2026-07-16T17:31:00+08:00'
+sources:
+  - path: indexes/topics.md
+  - path: notes/20260622/note_20260622_91fc906a.md
+  - path: notes/20260716/note_20260716_d9efd515.md
+payload:
+  summary: 当前知识库的索引、来源引用和 AI 知识库主题页结构正常。两条 Note 已共同形成 personal-knowledge-management 主题候选，但尚未编译为独立 Topic，属于明确的下一步整理项。
+  issues:
+    - code: missing_topic
+      severity: info
+      target_paths:
+        - notes/20260622/note_20260622_91fc906a.md
+        - notes/20260716/note_20260716_d9efd515.md
+      description: 两条笔记都包含 personal-knowledge-management，但 indexes/topics.md 中尚无对应主题页。
+      suggested_action: 在需要使用个人知识管理主题时，显式编译该 Topic。
+      topic_key: personal-knowledge-management

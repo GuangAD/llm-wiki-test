@@ -4,7 +4,7 @@ from pathlib import Path
 import typer
 
 from kb.core.errors import error_response
-from kb.services.topic_service import compile_continue
+from kb.services.topic_service import compile_continue, request_compile
 
 app = typer.Typer()
 
@@ -16,12 +16,14 @@ def compile_command(
 ) -> None:
     if continue_job and topic_key:
         response = compile_continue(Path.cwd(), continue_job, topic_key)
+    elif topic_key:
+        response = request_compile(Path.cwd(), topic_key)
     else:
         response = error_response(
             command="kb compile",
             status="permanent_failed",
             error_code="INVALID_INPUT",
-            error_message="--continue and --topic-key are required.",
+            error_message="--topic-key is required.",
             retryable=False,
             next_action="none",
         )

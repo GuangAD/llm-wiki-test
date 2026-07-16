@@ -1,0 +1,28 @@
+request_id: gen_20260716172457_7a651857_answer
+job_id: job_20260716172457_7a651857
+generation_type: answer
+status: completed
+created_at: '2026-07-16T17:26:00+08:00'
+sources:
+  - path: wiki/topic-ai-knowledge-base.md
+  - path: notes/20260622/note_20260622_91fc906a.md
+    source_uri: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+  - path: notes/20260716/note_20260716_d9efd515.md
+    source_uri: D:\test\fuxix\08-ai-architecture-thinking-20260610.md
+payload:
+  title: LLM Wiki 与传统 RAG 的核心区别
+  question: LLM Wiki 和传统 RAG 的核心区别是什么？
+  answer_markdown: |-
+    传统 RAG 的重点是“查询时检索”：每次收到问题后，从原始文档中寻找相关片段，再临时组合答案。模型完成了一次回答，但形成的综合判断通常不会成为下一次查询可以直接复用的知识。
+
+    LLM Wiki 的重点是“持续编译”：新资料进入后，智能体立即生成原子笔记、更新主题页、记录分歧和来源。查询时优先读取已经形成的主题知识，只有信息不足时才下钻原子笔记和原文。
+
+    因此，两者真正的区别不是是否使用向量检索，而是有没有持久化“已经形成的理解”：RAG 主要保存资料和检索能力，LLM Wiki 还保存跨资料形成的、会持续更新的知识成果。
+  citations:
+    - path: wiki/topic-ai-knowledge-base.md
+    - path: notes/20260622/note_20260622_91fc906a.md
+      source_uri: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+    - path: notes/20260716/note_20260716_d9efd515.md
+      source_uri: D:\test\fuxix\08-ai-architecture-thinking-20260610.md
+  topic_keys:
+    - ai-knowledge-base

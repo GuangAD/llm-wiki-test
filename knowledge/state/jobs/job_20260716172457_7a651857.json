@@ -1,0 +1,14 @@
+{
+  "job_id": "job_20260716172457_7a651857",
+  "generation_type": "answer",
+  "question": "LLM Wiki 和传统 RAG 的核心区别是什么？",
+  "save": true,
+  "source_paths": [
+    "wiki/topic-ai-knowledge-base.md",
+    "notes/20260622/note_20260622_91fc906a.md",
+    "notes/20260716/note_20260716_d9efd515.md"
+  ],
+  "status": "needs_generation",
+  "created_at": "2026-07-16T17:24:57.799706+08:00",
+  "updated_at": "2026-07-16T17:24:57.799706+08:00"
+}

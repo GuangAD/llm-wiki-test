@@ -44,7 +44,10 @@ def test_status_reports_inventory_from_indexes_and_content_dirs(workspace, monke
         "raw": 1,
         "notes": 1,
         "wiki": 1,
+        "topics": 1,
+        "insights": 0,
         "briefs": 1,
+        "reports": 0,
     }
     assert data["recent_notes"] == [
         {

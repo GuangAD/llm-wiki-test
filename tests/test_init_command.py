@@ -24,12 +24,16 @@ def test_init_creates_directories(workspace, monkeypatch):
         "state/generation_results",
         "state/locks",
         "logs",
+        "reports",
     ]:
         assert (workspace / path).exists()
     assert (workspace / "prompts" / "note.md").exists()
     assert (workspace / "prompts" / "topic.md").exists()
     assert (workspace / "prompts" / "brief-topics.md").exists()
     assert (workspace / "prompts" / "brief-weekly.md").exists()
+    assert (workspace / "prompts" / "answer.md").exists()
+    assert (workspace / "prompts" / "lint.md").exists()
+    assert (workspace / "logs" / "history.md").exists()
 
 
 def test_init_does_not_overwrite_existing_prompt(workspace, monkeypatch):
